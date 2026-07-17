@@ -101,6 +101,32 @@ export class RelayRoom extends DurableObject {
         return json({ agents: await this.activeAgents() });
       }
 
+      if (request.method === "GET" && url.pathname === "/status") {
+        const rawAgent = url.searchParams.get("agent");
+        if (!rawAgent) return json({ error: "missing agent query parameter" }, 400);
+        const agentId = await this.resolveName(rawAgent);
+        if (!agentId || agentId === "all") {
+          return json({ error: `unknown agent: ${rawAgent}` }, 404);
+        }
+
+        const messages = (await this.storage.get(inboxKey(agentId))) || [];
+        const bySender = new Map();
+        for (const message of messages) {
+          const sender = message.from;
+          const current = bySender.get(sender) || {
+            id: sender,
+            name: message.from_name || sender,
+            count: 0,
+          };
+          current.count += 1;
+          bySender.set(sender, current);
+        }
+        return json({
+          count: messages.length,
+          senders: Array.from(bySender.values()),
+        });
+      }
+
       if (request.method === "GET" && url.pathname === "/inbox") {
         const rawAgent = url.searchParams.get("agent");
         if (!rawAgent) return json({ error: "missing agent query parameter" }, 400);

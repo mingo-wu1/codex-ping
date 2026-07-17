@@ -101,6 +101,42 @@ def inbox(base, name):
     return request("GET", base + "/inbox?" + q).get("messages", [])
 
 
+def unread_status(base, name):
+    q = urllib.parse.urlencode({"agent": name})
+    return request("GET", base + "/status?" + q)
+
+
+def status_signature(status):
+    return tuple(
+        sorted((sender.get("id"), sender.get("count", 0)) for sender in status.get("senders", []))
+    )
+
+
+def show_unread(status):
+    summaries = [
+        f"{sender.get('name') or sender.get('id')} {sender.get('count', 0)} 条"
+        for sender in status.get("senders", [])
+    ]
+    if summaries:
+        print("新消息：" + "，".join(summaries), flush=True)
+
+
+def listen(base, name):
+    print("正在监听，每 30 秒检查一次。", flush=True)
+    previous = ()
+    while True:
+        try:
+            register(base, name)
+            status = unread_status(base, name)
+            current = status_signature(status)
+            if current and current != previous:
+                show_unread(status)
+            previous = current
+        except SystemExit as error:
+            print(f"监听暂时断开：{error}", flush=True)
+        time.sleep(30)
+
+
 def show_messages(messages):
     for msg in messages:
         print(msg.get("body") or msg.get("text"))
@@ -144,6 +180,10 @@ def main():
         show_messages(messages)
         if not messages:
             print("没有消息")
+        return
+
+    if text == "监听":
+        listen(base, me)
         return
 
     agents = request("GET", base + "/agents").get("agents", [])

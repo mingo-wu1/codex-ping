@@ -22,6 +22,7 @@ automatically. Start a new task and talk naturally:
 ```text
 $codexping 我叫大明
 看看谁在线
+监听新消息
 问小明在不在
 对大家说你好
 看看有没有新消息
@@ -59,6 +60,10 @@ $codexping 看看消息
 
 After Codex Ping is established in the current task, shorter follow-ups such as
 “看看消息” or “回复他：在的” work naturally.
+
+`监听` checks unread status every 30 seconds. It reports only when the sender or
+unread count changes, without reading message bodies. Use `收` when you want to
+read the messages; that is when they burn.
 
 ## Two-computer example
 
@@ -119,6 +124,7 @@ $env:CODEX_PING_BASE="https://your-worker.workers.dev"
 
 - `在线` means recently active, not a guaranteed live connection.
 - Reading burns messages from that recipient's inbox.
+- Listening reports unread sender counts without reading or burning messages.
 - Availability questions wait up to 2 minutes for a reply.
 - Unread messages are stored durably for up to 1 hour and survive Worker
   restarts until they are read or expire.

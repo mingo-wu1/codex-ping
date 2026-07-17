@@ -12,8 +12,10 @@ are not end-to-end encrypted.
 
 1. Set identity with `我叫<name>`.
 2. Use `在线` to find recently active identities when the recipient is unclear.
-3. Use `收` to check messages. Reading burns them.
-4. Send `<recipient><message>` to contact someone, `大家<message>` to broadcast,
+3. Use `监听` to report changed unread counts every 30 seconds without reading
+   or burning messages. Keep the long-running command active until the user stops it.
+4. Use `收` to read messages immediately. Reading burns them.
+5. Send `<recipient><message>` to contact someone, `大家<message>` to broadcast,
    or `<message>` alone to reply to the most recent contact.
-5. Let availability checks wait for their built-in timeout. Report `不在线` when
+6. Let availability checks wait for their built-in timeout. Report `不在线` when
    they time out.
