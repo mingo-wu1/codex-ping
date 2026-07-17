@@ -19,7 +19,6 @@ See recently active identities before choosing a recipient:
 
 ```bash
 ./hw 在线
-./hw 在线 --json
 ```
 
 ## Quick Start
@@ -86,8 +85,7 @@ After someone talks to you, you can reply without naming them:
 
 - `名字注册` sets your local identity and announces you to the relay.
 - `收` reads your inbox. Read messages are deleted.
-- `在线`, `谁在`, or `who` lists recently active identities.
-- Add `--json` to `在线` or `收` for agent-friendly structured output.
+- `在线` lists recently active identities.
 - `小明在吗？` sends `在吗？` to 小明 and waits up to 2 minutes.
 - `在的` replies to the last person.
 - The 2-minute wait controls how long the sender waits for an immediate reply;

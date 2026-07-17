@@ -70,10 +70,7 @@ def inbox(base, name):
     return request("GET", base + "/inbox?" + q).get("messages", [])
 
 
-def show_messages(messages, json_output=False):
-    if json_output:
-        print(json.dumps({"messages": messages}, ensure_ascii=False))
-        return
+def show_messages(messages):
     for msg in messages:
         print(msg.get("body") or msg.get("text"))
 
@@ -82,19 +79,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("text", nargs="+", help="例如：小明在吗？")
     parser.add_argument("--base", default=BASE)
-    parser.add_argument("--json", action="store_true", dest="json_output")
     parser.add_argument("--timeout", type=int, default=120, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     text = " ".join(args.text).strip()
     base = args.base.rstrip("/")
 
-    if text in {"在线", "谁在", "who"}:
+    if text == "在线":
         agents = request("GET", base + "/agents").get("agents", [])
         agents = sorted(agents, key=lambda agent: agent.get("name") or agent.get("id") or "")
-        if args.json_output:
-            print(json.dumps({"agents": agents}, ensure_ascii=False))
-        elif agents:
+        if agents:
             print("最近活跃：")
             for agent in agents:
                 print(f"- {agent.get('name') or agent.get('id')}")
@@ -119,8 +113,8 @@ def main():
 
     if text == "收":
         messages = inbox(base, me)
-        show_messages(messages, args.json_output)
-        if not messages and not args.json_output:
+        show_messages(messages)
+        if not messages:
             print("没有消息")
         return
 
@@ -150,7 +144,7 @@ def main():
             messages = inbox(base, me)
             replies = [msg for msg in messages if msg.get("from") == to]
             if replies:
-                show_messages(replies, args.json_output)
+                show_messages(replies)
                 return
             time.sleep(2)
         print("不在线")
