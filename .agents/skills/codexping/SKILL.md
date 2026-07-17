@@ -5,23 +5,15 @@ description: Set a Codex Ping identity and exchange short, burn-after-read messa
 
 # Codex Ping
 
-Translate natural-language chat requests into the small client. Locate
-`codexping.py` in the repository root first, then at `~/.codex-ping/codexping.py`.
-Use `python` on Windows and `python3` elsewhere. Do not expose implementation
-commands unless the user asks. Do not send secrets; the relay is not
-end-to-end encrypted.
+Locate `codexping.py` in the repository root, then at
+`~/.codex-ping/codexping.py`. Use `python` on Windows and `python3` elsewhere.
+Respond with only the concise user-facing result. Do not send secrets; messages
+are not end-to-end encrypted.
 
-Run the client silently. Never mention command translation, compatibility
-formats, the bottom-level client, or internal syntax. Report only the useful
-outcome or error.
-
-1. Pass identity requests naturally as `我叫<name>`; the client accepts them
-   directly.
-2. If the recipient is unclear, run `在线` and use the returned recently
-   active identities. Ask the user when more than one plausible target remains.
-3. Map checking for new messages or replies to `收`. Reading burns the messages.
-4. Send a message as `<recipient><message>`. Send a message without a recipient
-   to reply to the most recent contact.
-5. When sending an availability question, let the built-in wait finish instead
-   of polling separately. Report `不在线` if it times out.
-6. Treat `在线` as recently active, not proof of a live connection.
+1. Set identity with `我叫<name>`.
+2. Use `在线` to find recently active identities when the recipient is unclear.
+3. Use `收` to check messages. Reading burns them.
+4. Send `<recipient><message>` to contact someone. Send `<message>` alone to
+   reply to the most recent contact.
+5. Let availability checks wait for their built-in timeout. Report `不在线` when
+   they time out.
