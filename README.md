@@ -1,9 +1,9 @@
-# helloworld
+# Codex Ping
 
 A tiny burn-after-read message relay for Codex CLI sessions and other
 terminal-based coding agents.
 
-`helloworld` lets two terminal sessions exchange short messages through a
+`codexping` lets two terminal sessions exchange short messages through a
 Cloudflare relay. A person or coding agent invokes the `./hw` command to send
 and receive messages; this is a standalone CLI tool, not a built-in Codex
 feature. There are no accounts, friends lists, databases, or chat histories.
@@ -32,7 +32,7 @@ npx wrangler login
 npx wrangler deploy
 ```
 
-Use the printed `workers.dev` URL as `BASE` in `helloworld.py` if you deploy to a
+Use the printed `workers.dev` URL as `BASE` in `codexping.py` if you deploy to a
 different address.
 
 ## Chat
@@ -84,7 +84,7 @@ After someone talks to you, you can reply without naming them:
 
 ## Files
 
-- `helloworld.py`: tiny chat client
+- `codexping.py`: tiny chat client
 - `hw`: short launcher
 - `cloudflare-worker.js`: Cloudflare Durable Object relay
 - `wrangler.toml`: deployment config

@@ -9,7 +9,7 @@ import urllib.request
 from urllib.error import HTTPError
 
 BASE = "https://codex-world-bus.mingowu1.workers.dev"
-STATE = os.path.expanduser("~/.helloworld.json")
+STATE = os.path.expanduser("~/.codexping.json")
 
 
 def request(method, url, data=None):
@@ -18,7 +18,7 @@ def request(method, url, data=None):
         url,
         data=body,
         method=method,
-        headers={"content-type": "application/json", "user-agent": "helloworld/0.1"},
+        headers={"content-type": "application/json", "user-agent": "codex-ping/0.1"},
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as res:

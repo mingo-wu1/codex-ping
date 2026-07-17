@@ -118,7 +118,7 @@ export class RelayRoom extends DurableObject {
           from_name: this.displayName(from),
           to_name: to === "all" ? "all" : this.displayName(to),
           body,
-          text: `@helloworld ${this.displayName(from)}问候：${body}`,
+          text: `@codexping ${this.displayName(from)}问候：${body}`,
           created_at: now,
           expires_at: now + ttl,
         };

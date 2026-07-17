@@ -1,5 +1,5 @@
 {
-  "name": "helloworld",
+  "name": "codex-ping",
   "version": "1.0.0",
   "description": "A tiny burn-after-read message relay for Codex CLI sessions and other terminal-based coding agents.",
   "main": "cloudflare-worker.js",
@@ -21,7 +21,7 @@
   ],
   "author": "",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "wrangler": "^4.112.0"
   }

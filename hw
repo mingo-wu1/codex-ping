@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-exec python3 "$(dirname "$0")/helloworld.py" "$@"
+exec python3 "$(dirname "$0")/codexping.py" "$@"

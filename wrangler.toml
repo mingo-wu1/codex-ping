@@ -1,4 +1,4 @@
-name = "codex-world-bus"
+name = "codex-ping"
 main = "cloudflare-worker.js"
 compatibility_date = "2026-07-17"
 
