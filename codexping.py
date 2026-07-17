@@ -8,7 +8,10 @@ import urllib.parse
 import urllib.request
 from urllib.error import HTTPError
 
-BASE = "https://codex-world-bus.mingowu1.workers.dev"
+BASE = os.environ.get(
+    "CODEX_PING_BASE",
+    "https://codex-world-bus.mingowu1.workers.dev",
+)
 STATE = os.path.expanduser("~/.codexping.json")
 
 
@@ -67,7 +70,10 @@ def inbox(base, name):
     return request("GET", base + "/inbox?" + q).get("messages", [])
 
 
-def show_messages(messages):
+def show_messages(messages, json_output=False):
+    if json_output:
+        print(json.dumps({"messages": messages}, ensure_ascii=False))
+        return
     for msg in messages:
         print(msg.get("body") or msg.get("text"))
 
@@ -76,11 +82,25 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("text", nargs="+", help="例如：小明在吗？")
     parser.add_argument("--base", default=BASE)
+    parser.add_argument("--json", action="store_true", dest="json_output")
     parser.add_argument("--timeout", type=int, default=120, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     text = " ".join(args.text).strip()
     base = args.base.rstrip("/")
+
+    if text in {"在线", "谁在", "who"}:
+        agents = request("GET", base + "/agents").get("agents", [])
+        agents = sorted(agents, key=lambda agent: agent.get("name") or agent.get("id") or "")
+        if args.json_output:
+            print(json.dumps({"agents": agents}, ensure_ascii=False))
+        elif agents:
+            print("最近活跃：")
+            for agent in agents:
+                print(f"- {agent.get('name') or agent.get('id')}")
+        else:
+            print("暂无活跃成员")
+        return
 
     register_match = re.fullmatch(r"(.+?)\s*注册", text)
     if text == "注册" or register_match:
@@ -99,8 +119,8 @@ def main():
 
     if text == "收":
         messages = inbox(base, me)
-        show_messages(messages)
-        if not messages:
+        show_messages(messages, args.json_output)
+        if not messages and not args.json_output:
             print("没有消息")
         return
 
@@ -130,7 +150,7 @@ def main():
             messages = inbox(base, me)
             replies = [msg for msg in messages if msg.get("from") == to]
             if replies:
-                show_messages(replies)
+                show_messages(replies, args.json_output)
                 return
             time.sleep(2)
         print("不在线")
