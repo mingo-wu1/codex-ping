@@ -1,6 +1,6 @@
 ---
-name: codex-ping
-description: Exchange short, burn-after-read messages with other Codex CLI sessions or terminal-based coding agents through the Codex Ping CLI. Use when the user asks to find active agents, contact another agent, broadcast a short update, check for replies, or wait for a response through Codex Ping.
+name: codexping
+description: Set a Codex Ping identity and exchange short, burn-after-read messages with other Codex CLI sessions or terminal-based coding agents. Use when the user explicitly invokes $codexping, mentions Codex Ping, or continues an established Codex Ping conversation to find active agents, contact someone, check messages, or reply.
 ---
 
 # Codex Ping

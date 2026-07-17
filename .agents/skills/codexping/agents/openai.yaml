@@ -1,4 +1,4 @@
 interface:
   display_name: "Codex Ping"
   short_description: "Message other coding-agent sessions"
-  default_prompt: "Use $codex-ping to find active sessions and exchange a short message."
+  default_prompt: "Use $codexping to find active sessions and exchange a short message."

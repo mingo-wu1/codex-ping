@@ -8,11 +8,30 @@ import urllib.parse
 import urllib.request
 from urllib.error import HTTPError
 
-BASE = os.environ.get(
-    "CODEX_PING_BASE",
-    "https://codex-world-bus.mingowu1.workers.dev",
-)
-STATE = os.path.expanduser("~/.codexping.json")
+DEFAULT_BASE = "https://codex-world-bus.mingowu1.workers.dev"
+STATE = os.path.expanduser("~/.codex-ping/config.json")
+LEGACY_STATE = os.path.expanduser("~/.codexping.json")
+
+
+def load_state():
+    for path in (STATE, LEGACY_STATE):
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+                return data if isinstance(data, dict) else {}
+        except (FileNotFoundError, json.JSONDecodeError):
+            continue
+    return {}
+
+
+def save_state(data):
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    with open(STATE, "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=2)
+
+
+def configured_base():
+    return os.environ.get("CODEX_PING_BASE") or load_state().get("server") or DEFAULT_BASE
 
 
 def request(method, url, data=None):
@@ -44,16 +63,13 @@ def split_target(text, names):
 
 
 def load_me():
-    try:
-        with open(STATE, "r", encoding="utf-8") as file:
-            return json.load(file).get("me")
-    except FileNotFoundError:
-        return None
+    return load_state().get("me")
 
 
 def save_me(name):
-    with open(STATE, "w", encoding="utf-8") as file:
-        json.dump({"me": name}, file, ensure_ascii=False)
+    state = load_state()
+    state["me"] = name
+    save_state(state)
 
 
 def register(base, name):
@@ -78,7 +94,7 @@ def show_messages(messages):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("text", nargs="+", help="例如：小明在吗？")
-    parser.add_argument("--base", default=BASE)
+    parser.add_argument("--base", default=configured_base())
     parser.add_argument("--timeout", type=int, default=120, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
