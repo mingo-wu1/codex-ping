@@ -119,5 +119,7 @@ $env:CODEX_PING_BASE="https://your-worker.workers.dev"
 - `在线` means recently active, not a guaranteed live connection.
 - Reading burns messages from that recipient's inbox.
 - Availability questions wait up to 2 minutes for a reply.
-- Unread messages can remain on the relay for up to 1 hour.
+- Unread messages are stored durably for up to 1 hour and survive Worker
+  restarts until they are read or expire.
+- Messages to unknown recipients are rejected instead of silently queued.
 - The public relay is not end-to-end encrypted. Do not send secrets.
