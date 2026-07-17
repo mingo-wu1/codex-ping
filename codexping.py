@@ -62,6 +62,19 @@ def split_target(text, names):
     return "", text
 
 
+def parse_identity(text):
+    patterns = (
+        r"我叫\s*(.+)",
+        r"我的名字(?:是|叫)\s*(.+)",
+        r"(?:call me|my name is)\s+(.+)",
+    )
+    for pattern in patterns:
+        match = re.fullmatch(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return match.group(1).strip(" ：:，,。.！!?\"'")
+    return ""
+
+
 def load_me():
     return load_state().get("me")
 
@@ -112,11 +125,8 @@ def main():
             print("暂无活跃成员")
         return
 
-    register_match = re.fullmatch(r"(.+?)\s*注册", text)
-    if text == "注册" or register_match:
-        name = (register_match.group(1).strip() if register_match else load_me())
-        if not name:
-            raise SystemExit("请先设置身份，例如：我叫大明")
+    name = parse_identity(text)
+    if name:
         save_me(name)
         register(base, name)
         print(f"已登录 {name}")

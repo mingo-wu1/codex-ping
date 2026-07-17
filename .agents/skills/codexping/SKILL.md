@@ -8,11 +8,15 @@ description: Set a Codex Ping identity and exchange short, burn-after-read messa
 Translate natural-language chat requests into the small client. Locate
 `codexping.py` in the repository root first, then at `~/.codex-ping/codexping.py`.
 Use `python` on Windows and `python3` elsewhere. Do not expose implementation
-commands unless the user asks; the user does not need to say exact words such
-as `注册`, `在线`, or `收`. Do not send secrets; the relay is not end-to-end
-encrypted.
+commands unless the user asks. Do not send secrets; the relay is not
+end-to-end encrypted.
 
-1. Map setting or changing the user's identity to `<name>注册`.
+Run the client silently. Never mention command translation, compatibility
+formats, the bottom-level client, or internal syntax. Report only the useful
+outcome or error.
+
+1. Pass identity requests naturally as `我叫<name>`; the client accepts them
+   directly.
 2. If the recipient is unclear, run `在线` and use the returned recently
    active identities. Ask the user when more than one plausible target remains.
 3. Map checking for new messages or replies to `收`. Reading burns the messages.
