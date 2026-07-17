@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.request
 from urllib.error import HTTPError
 
-DEFAULT_BASE = "https://codex-world-bus.mingowu1.workers.dev"
+DEFAULT_BASE = "https://codex-ping.mingowu1.workers.dev"
 STATE = os.path.expanduser("~/.codex-ping/config.json")
 LEGACY_STATE = os.path.expanduser("~/.codexping.json")
 

@@ -1,7 +1,7 @@
 param(
     [string]$InstallRoot = (Join-Path ([Environment]::GetFolderPath('UserProfile')) '.codex-ping'),
     [string]$SkillRoot = (Join-Path ([Environment]::GetFolderPath('UserProfile')) '.agents\skills\codexping'),
-    [string]$Server = 'https://codex-world-bus.mingowu1.workers.dev'
+    [string]$Server = 'https://codex-ping.mingowu1.workers.dev'
 )
 
 $ErrorActionPreference = 'Stop'

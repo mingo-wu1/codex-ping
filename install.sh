@@ -4,7 +4,7 @@ set -eu
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 install_root=${CODEX_PING_INSTALL_ROOT:-"$HOME/.codex-ping"}
 skill_root=${CODEX_PING_SKILL_ROOT:-"$HOME/.agents/skills/codexping"}
-server=${1:-"https://codex-world-bus.mingowu1.workers.dev"}
+server=${1:-"https://codex-ping.mingowu1.workers.dev"}
 server=${server%/}
 
 case "$server" in
