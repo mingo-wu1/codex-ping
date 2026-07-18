@@ -68,7 +68,11 @@ cd market
 npm install
 npm test
 npm run test:cli
+npm run test:worker-cli
+npm run test:commerce
 ```
+
+Run the complete Ping + Market + Worker + QR commerce acceptance suite from the repository root with `npm run test:all`.
 
 - [Decentralized protocol](market/docs/DECENTRALIZED_PROTOCOL.md)
 - [Product requirements](market/docs/PRD.md)

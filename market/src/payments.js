@@ -59,3 +59,16 @@ export async function verifyStripeWebhook({ payload, signatureHeader, webhookSec
   if (!parts.v1 || parts.v1 !== expected) throw new Error("Stripe webhook signature is invalid");
   return JSON.parse(payload);
 }
+
+export function validateStripeCheckoutPayment(session, order) {
+  if (session?.payment_status !== "paid") throw new Error("Stripe session is not paid");
+  if (session?.metadata?.order_id !== order?.id) throw new Error("Stripe order reference mismatch");
+  if (!Number.isInteger(session?.amount_total) || session.amount_total !== order?.totalMinor) {
+    throw new Error("Stripe paid amount mismatch");
+  }
+  if (String(session?.currency || "").toUpperCase() !== String(order?.currency || "").toUpperCase()) {
+    throw new Error("Stripe paid currency mismatch");
+  }
+  if (!session?.id) throw new Error("Stripe session reference is missing");
+  return { orderId: order.id, paymentReference: session.id };
+}

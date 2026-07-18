@@ -15,7 +15,15 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
 
 New-Item -ItemType Directory -Force -Path $InstallRoot, $SkillRoot, (Join-Path $SkillRoot 'agents'), (Join-Path $InstallRoot 'market') | Out-Null
 Copy-Item -Force -LiteralPath (Join-Path $repoRoot 'codexping.py') -Destination (Join-Path $InstallRoot 'codexping.py')
-Copy-Item -Recurse -Force -Path (Join-Path $repoRoot 'market\*') -Destination (Join-Path $InstallRoot 'market')
+$marketRoot = Join-Path $InstallRoot 'market'
+foreach ($file in @('marketboard.py', 'marketadmin.py', 'package.json', 'package-lock.json', 'wrangler.toml', 'README.md')) {
+    Copy-Item -Force -LiteralPath (Join-Path $repoRoot "market\$file") -Destination $marketRoot
+}
+foreach ($directory in @('src', 'scripts', 'test-assets')) {
+    $destination = Join-Path $marketRoot $directory
+    New-Item -ItemType Directory -Force -Path $destination | Out-Null
+    Copy-Item -Recurse -Force -Path (Join-Path $repoRoot "market\$directory\*") -Destination $destination
+}
 Copy-Item -Force -LiteralPath (Join-Path $repoRoot '.agents\skills\codexbazaar\SKILL.md') -Destination $SkillRoot
 Copy-Item -Force -LiteralPath (Join-Path $repoRoot '.agents\skills\codexbazaar\agents\openai.yaml') -Destination (Join-Path $SkillRoot 'agents')
 

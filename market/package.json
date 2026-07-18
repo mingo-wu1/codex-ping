@@ -10,9 +10,13 @@
     "deploy": "wrangler deploy",
     "check": "wrangler deploy --dry-run",
     "test:cli": "node scripts/cli-install-smoke.mjs",
-    "test:worker-cli": "node scripts/worker-cli-smoke.mjs"
+    "test:worker-cli": "node scripts/worker-cli-smoke.mjs",
+    "test:commerce": "node scripts/full-commerce-smoke.mjs"
   },
   "devDependencies": {
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.4",
     "wrangler": "^4.112.0"
   },
   "author": "Mingo",

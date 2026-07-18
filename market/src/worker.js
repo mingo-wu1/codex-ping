@@ -1,7 +1,8 @@
 import { DurableObject } from "cloudflare:workers";
 import { MarketBoard } from "./market.js";
 import { BOARD_HTML } from "./ui.js";
-import { createStripeCheckout, verifyStripeWebhook } from "./payments.js";
+import { createStripeCheckout, validateStripeCheckoutPayment, verifyStripeWebhook } from "./payments.js";
+import { createCheckoutQrSvg } from "./qr-encode.js";
 
 const encoder = new TextEncoder();
 
@@ -338,16 +339,18 @@ export class MarketRoom extends DurableObject {
             secretKey: this.env.STRIPE_SECRET_KEY,
             connectedAccount: accounts[order.merchantId]?.stripeAccountId,
           });
-          return json(result);
+          return json({ ...result, checkoutQrSvg: await createCheckoutQrSvg(result.checkoutUrl) });
         }
         if (provider !== "mock") throw new Error(`unsupported payment provider: ${provider}`);
         if (String(this.env.ALLOW_MOCK_PAYMENTS || "false") !== "true") throw new Error("mock payments are disabled");
         const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60;
         const signature = await hmac(this.paymentSigningSecret(), `${order.id}.${expiresAt}`);
         const paymentSecret = `${expiresAt}.${signature}`;
+        const checkoutUrl = `${url.origin}/pay/${order.id}?secret=${encodeURIComponent(paymentSecret)}`;
         return json({
           provider: "mock",
-          checkoutUrl: `${url.origin}/pay/${order.id}?secret=${encodeURIComponent(paymentSecret)}`,
+          checkoutUrl,
+          checkoutQrSvg: await createCheckoutQrSvg(checkoutUrl),
           note: "Development payment provider. Configure a production adapter before accepting real money.",
         });
       }
@@ -375,7 +378,8 @@ export class MarketRoom extends DurableObject {
           if (!orderId) throw new Error("Stripe event is missing order_id metadata");
           const existing = board.getOrder(orderId);
           if (existing.status === "awaiting_payment") {
-            board.recordVerifiedPayment({ orderId, paymentReference: event.data.object.id, webhookVerified: true });
+            const verified = validateStripeCheckoutPayment(event.data.object, existing);
+            board.recordVerifiedPayment({ ...verified, webhookVerified: true });
             await this.save(board);
           }
         }

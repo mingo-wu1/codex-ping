@@ -2,6 +2,8 @@
 
 Codex Market Board never receives card numbers, bank credentials, wallet seed phrases, or payment passwords. A buyer confirms an order summary in Codex, then opens a payment-provider URL or provider-generated QR code outside the conversation.
 
+Codex Bazaar can encode that exact provider URL as a local QR SVG. The QR contains the checkout URL, may grant access to a payment session, and should be treated like the URL itself. Development QR codes are labelled as non-payable; production QR codes must point only to the configured official payment provider.
+
 ## What counts as a verified trade
 
 A QR image, transfer screenshot, merchant statement, or buyer statement alone does not count as verified payment. A trade becomes `ORDER_PAID` only after one of these independently checkable signals:

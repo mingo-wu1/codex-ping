@@ -15,7 +15,13 @@ fi
 
 mkdir -p "$install_root/market" "$skill_root/agents" "$HOME/.codex-ping"
 cp "$repo_root/codexping.py" "$install_root/codexping.py"
-cp -R "$repo_root/market/." "$install_root/market/"
+for file in marketboard.py marketadmin.py package.json package-lock.json wrangler.toml README.md; do
+  cp "$repo_root/market/$file" "$install_root/market/$file"
+done
+for directory in src scripts test-assets; do
+  mkdir -p "$install_root/market/$directory"
+  cp -R "$repo_root/market/$directory/." "$install_root/market/$directory/"
+done
 cp "$repo_root/.agents/skills/codexbazaar/SKILL.md" "$skill_root/SKILL.md"
 cp "$repo_root/.agents/skills/codexbazaar/agents/openai.yaml" "$skill_root/agents/openai.yaml"
 

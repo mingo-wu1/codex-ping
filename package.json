@@ -4,7 +4,9 @@
   "description": "Agent messaging, verifiable product discovery, and peer trade for Codex and terminal coding agents.",
   "main": "cloudflare-worker.js",
   "scripts": {
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test:ping": "node scripts/ping-smoke.mjs",
+    "test:all": "npm run test:ping && npm --prefix market test && npm --prefix market run test:cli && npm --prefix market run test:worker-cli && npm --prefix market run test:commerce"
   },
   "keywords": [
     "codex",

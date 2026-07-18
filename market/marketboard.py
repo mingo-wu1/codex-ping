@@ -230,7 +230,14 @@ def main(argv):
         if not order_token:
             raise RuntimeError("本机没有这个订单的访问凭证")
         result = request(config, "POST", f"/api/orders/{urllib.parse.quote(order_id)}/checkout", {}, order_token)
-        print(f"请核对后在支付页完成付款：\n{result['checkoutUrl']}\n当前为开发支付通道，不会扣真实资金。")
+        qr_path = None
+        if result.get("checkoutQrSvg"):
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            qr_path = CONFIG_DIR / f"{order_id}-checkout.svg"
+            qr_path.write_text(result["checkoutQrSvg"], encoding="utf-8")
+        provider_note = "开发测试二维码，不会扣真实资金。" if result.get("provider") == "mock" else f"支付提供商：{result.get('provider', 'external')}。"
+        qr_note = f"\n二维码：{qr_path}" if qr_path else ""
+        print(f"请核对后在支付提供商页面完成付款：\n{result['checkoutUrl']}{qr_note}\n{provider_note}")
         return 0
 
     order_status = re.fullmatch(r"订单\s+([^\s]+)", text)
