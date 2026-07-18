@@ -28,7 +28,8 @@ For the hosted MVP, run repository `market/marketboard.py`, then `~/.codex-bazaa
 3. Contact a verified `codexping:<name>` merchant through Ping automatically.
 4. An offline merchant means details are temporarily unavailable, not that the listing disappeared.
 5. Never expose merchant tokens, order tokens, shipping addresses, identity documents, or payment credentials.
-6. Publish a product with a Base64-backed image using `发布图 <name> <price> <local-image-path>`. Images up to 2 MB are chunked in the hosted Durable Object. `看 <listing-id>` downloads the first image, verifies its SHA-256 hash, and reports the restored local path.
+6. Publish a product with a Base64-backed image using `发布图 <name> <price> <local-image-path>`. Images up to 2 MB are chunked in the hosted Durable Object. Search automatically downloads leading-result images and verifies their SHA-256 hashes.
+7. Never require a user to copy a listing ID. Search downloads and displays images for the leading results and remembers them. Resolve `这个` and `第N个` from the latest search, so the normal flow is `找...` → `买这个` → `确认`.
 
 ## Pay
 

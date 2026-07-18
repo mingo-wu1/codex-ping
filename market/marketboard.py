@@ -99,15 +99,28 @@ def money(minor, currency):
     return f"{minor / 100:.2f} {currency}"
 
 
+def listing_reference(config, value="这个"):
+    if value == "这个":
+        listing_id = config.get("lastListingId")
+    else:
+        numbered = re.fullmatch(r"第(\d+)个", value)
+        if numbered:
+            index = int(numbered.group(1)) - 1
+            results = config.get("lastSearchResults", [])
+            listing_id = results[index] if 0 <= index < len(results) else None
+        else:
+            listing_id = value
+    if not listing_id:
+        raise RuntimeError("请先搜索商品")
+    return listing_id
+
+
 def search(config, text):
     budget = re.search(r"(\d+(?:\.\d+)?)\s*元(?:以内|以下)?", text)
     query = re.sub(r"(?:找|搜索|想买|我要买|购买)", " ", text)
     if budget:
         query = query.replace(budget.group(0), " ")
     query = " ".join(query.replace("的", " ").split())
-    synonyms = {"电动牙刷": "toothbrush", "牙刷": "toothbrush"}
-    for source, target in synonyms.items():
-        query = query.replace(source, target)
     params = {"q": query, "sort": "trust"}
     if budget:
         params.update({"max_price_minor": str(round(float(budget.group(1)) * 100)), "currency": "CNY"})
@@ -115,13 +128,22 @@ def search(config, text):
     listings = result.get("listings", [])
     if not listings:
         return "没有找到符合条件的公开商品。"
+    listings.sort(key=lambda item: bool(item.get("images")), reverse=True)
+    config["lastSearchResults"] = [item["id"] for item in listings[:10]]
+    config["lastListingId"] = listings[0]["id"]
+    save_config(config)
     lines = []
     for index, item in enumerate(listings[:10], 1):
         stats = item["ranking"]["explanation"]
+        image_note = ""
+        if item.get("images") and index <= 3:
+            image_path, _ = download_listing_image(item["images"][0], item["id"])
+            image_note = f"｜图片：{image_path}"
         lines.append(
             f"{index}. {item['title']}｜{money(item['priceMinor'], item['currency'])}｜"
-            f"{item['merchant']['displayName']}｜真实付款样本 {stats['sampleSize']}｜{item['id']}"
+            f"{item['merchant']['displayName']}｜真实付款样本 {stats['sampleSize']}{image_note}"
         )
+    lines.append("已记住搜索结果。可以说：买这个，或买第2个。")
     return "\n".join(lines)
 
 
@@ -254,9 +276,12 @@ def main(argv):
         print(f"订单状态已更新：{result['status']}")
         return 0
 
-    listing = re.fullmatch(r"看\s+([^\s]+)", text)
+    listing = re.fullmatch(r"看(?:\s*([^\s]+))?", text)
     if listing:
-        item = request(config, "GET", f"/api/listings/{urllib.parse.quote(listing.group(1))}")["listing"]
+        listing_id = listing_reference(config, listing.group(1) or "这个")
+        item = request(config, "GET", f"/api/listings/{urllib.parse.quote(listing_id)}")["listing"]
+        config["lastListingId"] = listing_id
+        save_config(config)
         stats = item["ranking"]["explanation"]
         image_note = ""
         if item.get("images"):
@@ -265,26 +290,30 @@ def main(argv):
         print(f"{item['title']}\n{item['summary']}\n价格：{money(item['priceMinor'], item['currency'])}\n商家：{item['merchant']['displayName']}\n合规：{item['compliance']['status']} / {item['compliance']['policyId']} v{item['compliance']['policyVersion']}\n真实付款样本：{stats['sampleSize']}，退款率：{stats['refundRate']:.1%}，争议率：{stats['disputeRate']:.1%}{image_note}")
         return 0
 
-    buy = re.fullmatch(r"确认买\s+([^\s]+)(?:\s+(\d+))?", text)
+    buy = re.fullmatch(r"(?:确认买(?:\s*([^\s]+))?|确认)(?:\s+(\d+))?", text)
     if buy:
         if not config.get("buyerId"):
             raise RuntimeError("请先说：我叫<名字>")
         result = request(config, "POST", "/api/orders", {
-            "listingId": buy.group(1),
+            "listingId": listing_reference(config, buy.group(1) or "这个"),
             "quantity": int(buy.group(2) or 1),
             "buyerId": config["buyerId"],
             "buyerConfirmed": True,
         })
         order = result["order"]
         config.setdefault("orders", {})[order["id"]] = result["orderToken"]
+        config["lastOrderId"] = order["id"]
         save_config(config)
         print(f"订单已创建：{order['id']}\n应付：{money(order['totalMinor'], order['currency'])}\n需要付款时说：付款 {order['id']}")
         return 0
 
-    preview = re.fullmatch(r"(?:预览|买)\s+([^\s]+)(?:\s+(\d+))?", text)
+    preview = re.fullmatch(r"(?:预览|买)(?:\s*([^\s]+))?(?:\s+(\d+))?", text)
     if preview:
-        result = request(config, "POST", "/api/orders/preview", {"listingId": preview.group(1), "quantity": int(preview.group(2) or 1)})["preview"]
-        print(f"{result['title']} × {result['quantity']}\n合计：{money(result['totalMinor'], result['currency'])}\n确认无误后说：确认买 {result['listingId']} {result['quantity']}")
+        listing_id = listing_reference(config, preview.group(1) or "这个")
+        config["lastListingId"] = listing_id
+        save_config(config)
+        result = request(config, "POST", "/api/orders/preview", {"listingId": listing_id, "quantity": int(preview.group(2) or 1)})["preview"]
+        print(f"{result['title']} × {result['quantity']}\n合计：{money(result['totalMinor'], result['currency'])}\n确认无误后说：确认")
         return 0
 
     pay = re.fullmatch(r"付款\s+([^\s]+)", text)

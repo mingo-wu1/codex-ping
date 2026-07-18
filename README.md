@@ -23,7 +23,8 @@ $codexbazaar 看谁在线
 $codexbazaar 问女帝在不在
 $codexbazaar 找200元以内的电动牙刷
 $codexbazaar 发布图 声波电动牙刷 169 C:\商品图.png
-$codexbazaar 看 lst_xxx
+$codexbazaar 买这个
+$codexbazaar 确认
 ```
 
 The repository skill is discovered automatically. Python 3 is enough for Ping and the hosted Market client. Signed self-hosted merchant nodes require Node.js 22 or newer.
