@@ -1,0 +1,15 @@
+name = "codex-market-board"
+main = "src/worker.js"
+compatibility_date = "2026-07-18"
+
+[[durable_objects.bindings]]
+name = "MARKET_ROOM"
+class_name = "MarketRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MarketRoom"]
+
+[[r2_buckets]]
+binding = "MARKET_IMAGES"
+bucket_name = "codex-market-board-images"
