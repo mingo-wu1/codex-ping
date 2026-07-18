@@ -7,6 +7,8 @@ import json
 import os
 import re
 import sys
+import base64
+import hashlib
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -61,6 +63,36 @@ def upload(config, path, content_type, content, token_value):
         except Exception:
             message = str(exc)
         raise RuntimeError(message) from exc
+
+
+def image_file(path_text):
+    file_path = Path(path_text.strip().strip('"')).expanduser()
+    if not file_path.is_file():
+        raise RuntimeError("图片文件不存在")
+    content_types = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif"}
+    content_type = content_types.get(file_path.suffix.lower())
+    if not content_type:
+        raise RuntimeError("只支持 PNG、JPEG、WebP 或 GIF")
+    content = file_path.read_bytes()
+    if len(content) > 2 * 1024 * 1024:
+        raise RuntimeError("Base64 演示图片不能超过 2 MB")
+    return file_path, content_type, content
+
+
+def download_listing_image(url, listing_id):
+    req = urllib.request.Request(url, headers={"user-agent": "Codex-Bazaar/0.1"})
+    with urllib.request.urlopen(req, timeout=30) as response:
+        content = response.read()
+        content_type = response.headers.get_content_type()
+        expected_hash = response.headers.get("x-content-sha256")
+    actual_hash = hashlib.sha256(content).hexdigest()
+    if expected_hash and expected_hash != actual_hash:
+        raise RuntimeError("商品图片校验失败")
+    extension = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}.get(content_type, ".img")
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    destination = CONFIG_DIR / f"{listing_id}{extension}"
+    destination.write_bytes(content)
+    return destination, actual_hash
 
 
 def money(minor, currency):
@@ -126,6 +158,33 @@ def main(argv):
         save_config(config)
         merchant_status = result["merchant"]["status"]
         print(f"商家已登记：{result['merchant']['displayName']}（{merchant_status}）")
+        return 0
+
+    publish_image = re.fullmatch(r"发布图\s+(.+?)\s+(\d+(?:\.\d+)?)\s+(.+)", text)
+    if publish_image:
+        merchant_config = config.get("merchant")
+        if not merchant_config:
+            raise RuntimeError("请先完成商家入驻")
+        file_path, content_type, content = image_file(publish_image.group(3))
+        encoded = base64.b64encode(content).decode("ascii")
+        image = request(config, "POST", "/api/base64-images", {
+            "merchantId": merchant_config["id"],
+            "contentType": content_type,
+            "base64": encoded,
+            "sha256": hashlib.sha256(content).hexdigest(),
+        }, merchant_config["token"])
+        result = request(config, "POST", "/api/listings", {
+            "merchantId": merchant_config["id"],
+            "title": publish_image.group(1).strip(),
+            "summary": publish_image.group(1).strip(),
+            "category": "general-goods",
+            "priceMinor": round(float(publish_image.group(2)) * 100),
+            "currency": "CNY",
+            "shippingRegions": ["CN"],
+            "images": [image["url"]],
+        }, merchant_config["token"])
+        item = result["listing"]
+        print(f"商品和图片已发布：{item['title']}｜{money(item['priceMinor'], item['currency'])}｜{item['id']}｜图片 {image['bytes']} 字节｜SHA-256 {image['sha256']}")
         return 0
 
     upload_image = re.fullmatch(r"上传图\s+(.+)", text)
@@ -199,7 +258,11 @@ def main(argv):
     if listing:
         item = request(config, "GET", f"/api/listings/{urllib.parse.quote(listing.group(1))}")["listing"]
         stats = item["ranking"]["explanation"]
-        print(f"{item['title']}\n{item['summary']}\n价格：{money(item['priceMinor'], item['currency'])}\n商家：{item['merchant']['displayName']}\n合规：{item['compliance']['status']} / {item['compliance']['policyId']} v{item['compliance']['policyVersion']}\n真实付款样本：{stats['sampleSize']}，退款率：{stats['refundRate']:.1%}，争议率：{stats['disputeRate']:.1%}")
+        image_note = ""
+        if item.get("images"):
+            image_path, image_hash = download_listing_image(item["images"][0], item["id"])
+            image_note = f"\n图片已保存：{image_path}\n图片 SHA-256：{image_hash}"
+        print(f"{item['title']}\n{item['summary']}\n价格：{money(item['priceMinor'], item['currency'])}\n商家：{item['merchant']['displayName']}\n合规：{item['compliance']['status']} / {item['compliance']['policyId']} v{item['compliance']['policyVersion']}\n真实付款样本：{stats['sampleSize']}，退款率：{stats['refundRate']:.1%}，争议率：{stats['disputeRate']:.1%}{image_note}")
         return 0
 
     buy = re.fullmatch(r"确认买\s+([^\s]+)(?:\s+(\d+))?", text)

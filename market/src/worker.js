@@ -28,6 +28,11 @@ async function digest(value) {
   return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function digestBytes(value) {
+  const bytes = await crypto.subtle.digest("SHA-256", value);
+  return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 function base64Url(bytes) {
   let value = "";
   for (const byte of new Uint8Array(bytes)) value += String.fromCharCode(byte);
@@ -265,6 +270,42 @@ export class MarketRoom extends DurableObject {
         }
         await this.save(board);
         return json({ listing }, 201);
+      }
+
+      if (request.method === "POST" && path === "/api/base64-images") {
+        const input = await body(request);
+        const merchantId = String(input.merchantId || "");
+        await this.requireMerchant(request, merchantId);
+        const contentType = String(input.contentType || "").toLowerCase();
+        if (!/^image\/(png|jpeg|webp|gif)$/.test(contentType)) throw new Error("PNG, JPEG, WebP, or GIF image required");
+        const encoded = String(input.base64 || "");
+        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) throw new Error("valid base64 image required");
+        const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+        if (!bytes.byteLength || bytes.byteLength > 2 * 1024 * 1024) throw new Error("image must be between 1 byte and 2 MB");
+        const imageHash = await digestBytes(bytes);
+        if (input.sha256 && input.sha256 !== imageHash) throw new Error("image hash mismatch");
+        const imageId = `b64_${crypto.randomUUID()}`;
+        const chunkSize = 80 * 1024;
+        const chunks = [];
+        for (let offset = 0; offset < encoded.length; offset += chunkSize) chunks.push(encoded.slice(offset, offset + chunkSize));
+        await this.storage.put(Object.fromEntries(chunks.map((chunk, index) => [`base64Image:${imageId}:${index}`, chunk])));
+        await this.storage.put(`base64Image:${imageId}:meta`, { merchantId, contentType, imageHash, chunks: chunks.length, bytes: bytes.byteLength });
+        return json({ id: imageId, url: `${url.origin}/base64-images/${imageId}`, sha256: imageHash, bytes: bytes.byteLength }, 201);
+      }
+
+      const base64ImageMatch = path.match(/^\/base64-images\/([^/]+)$/);
+      if (request.method === "GET" && base64ImageMatch) {
+        const imageId = base64ImageMatch[1];
+        const metadata = await this.storage.get(`base64Image:${imageId}:meta`);
+        if (!metadata) return new Response("not found", { status: 404 });
+        let encoded = "";
+        for (let index = 0; index < metadata.chunks; index += 1) {
+          const chunk = await this.storage.get(`base64Image:${imageId}:${index}`);
+          if (typeof chunk !== "string") throw new Error("image chunk missing");
+          encoded += chunk;
+        }
+        const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+        return new Response(bytes, { headers: { "content-type": metadata.contentType, "cache-control": "public, max-age=86400", "x-content-sha256": metadata.imageHash, "x-content-type-options": "nosniff" } });
       }
 
       if (request.method === "POST" && path === "/api/images") {

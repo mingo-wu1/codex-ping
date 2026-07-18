@@ -22,6 +22,8 @@ $codexbazaar 我叫路飞
 $codexbazaar 看谁在线
 $codexbazaar 问女帝在不在
 $codexbazaar 找200元以内的电动牙刷
+$codexbazaar 发布图 声波电动牙刷 169 C:\商品图.png
+$codexbazaar 看 lst_xxx
 ```
 
 The repository skill is discovered automatically. Python 3 is enough for Ping and the hosted Market client. Signed self-hosted merchant nodes require Node.js 22 or newer.
@@ -41,6 +43,8 @@ sh install.sh
 ```
 
 Restart Codex, then use `$codexbazaar` from any project. Existing Codex Ping identities and configuration remain compatible.
+
+The hosted demo can carry product images without R2: `发布图` Base64-encodes an image up to 2 MB, stores it in small Durable Object chunks, and places only a short content URL in the listing. `看` restores the image locally and verifies its SHA-256 hash.
 
 ## Two-computer behavior
 
