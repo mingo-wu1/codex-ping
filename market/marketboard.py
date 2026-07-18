@@ -115,6 +115,23 @@ def listing_reference(config, value="这个"):
     return listing_id
 
 
+def create_checkout(config, order_id):
+    order_token = config.get("orders", {}).get(order_id)
+    if not order_token:
+        raise RuntimeError("本机没有最近订单的访问凭证")
+    result = request(config, "POST", f"/api/orders/{urllib.parse.quote(order_id)}/checkout", {}, order_token)
+    qr_path = None
+    if result.get("checkoutQrSvg"):
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        qr_path = CONFIG_DIR / f"{order_id}-checkout.svg"
+        qr_path.write_text(result["checkoutQrSvg"], encoding="utf-8")
+    config.setdefault("paymentSessions", {})[order_id] = {"provider": result.get("provider"), "checkoutUrl": result.get("checkoutUrl")}
+    config["lastOrderId"] = order_id
+    save_config(config)
+    provider_note = "开发测试二维码，不会扣真实资金。" if result.get("provider") == "mock" else f"支付提供商：{result.get('provider', 'external')}。"
+    return f"付款二维码：{qr_path}\n{provider_note}" if qr_path else f"付款链接：{result['checkoutUrl']}\n{provider_note}"
+
+
 def search(config, text):
     budget = re.search(r"(\d+(?:\.\d+)?)\s*元(?:以内|以下)?", text)
     query = re.sub(r"(?:找|搜索|想买|我要买|购买)", " ", text)
@@ -255,7 +272,7 @@ def main(argv):
         print(f"商品已发布：{item['title']}｜{money(item['priceMinor'], item['currency'])}｜{item['id']}｜{item['compliance']['status']}")
         return 0
 
-    if text == "商家订单":
+    if text in {"商家订单", "订单"} and config.get("merchant"):
         merchant_config = config.get("merchant")
         if not merchant_config:
             raise RuntimeError("请先完成商家入驻")
@@ -263,16 +280,24 @@ def main(argv):
         if not orders:
             print("暂无订单。")
         else:
-            print("\n".join(f"{item['id']}｜{item['title']} × {item['quantity']}｜{item['status']} ({item.get('paymentVerification') or '未付款'})｜{money(item['totalMinor'], item['currency'])}" for item in orders))
+            config["lastMerchantOrderId"] = orders[-1]["id"]
+            save_config(config)
+            print("\n".join(f"{item['title']} × {item['quantity']}｜{item['status']} ({item.get('paymentVerification') or '未付款'})｜{money(item['totalMinor'], item['currency'])}" for item in orders[-5:]))
+            print("已记住最新订单。可以直接说：接单。")
         return 0
 
-    merchant_action = re.fullmatch(r"(接单|已发货|退款)\s+([^\s]+)", text)
+    merchant_action = re.fullmatch(r"(接单|已发货|发货|退款)(?:\s+([^\s]+))?", text)
     if merchant_action:
         merchant_config = config.get("merchant")
         if not merchant_config:
             raise RuntimeError("请先完成商家入驻")
-        status = {"接单": "accepted", "已发货": "fulfilled", "退款": "refunded"}[merchant_action.group(1)]
-        result = request(config, "POST", f"/api/orders/{urllib.parse.quote(merchant_action.group(2))}/status", {"status": status}, merchant_config["token"])["order"]
+        order_id = merchant_action.group(2) or config.get("lastMerchantOrderId")
+        if not order_id:
+            raise RuntimeError("请先说：订单")
+        status = {"接单": "accepted", "已发货": "fulfilled", "发货": "fulfilled", "退款": "refunded"}[merchant_action.group(1)]
+        result = request(config, "POST", f"/api/orders/{urllib.parse.quote(order_id)}/status", {"status": status}, merchant_config["token"])["order"]
+        config["lastMerchantOrderId"] = order_id
+        save_config(config)
         print(f"订单状态已更新：{result['status']}")
         return 0
 
@@ -304,7 +329,8 @@ def main(argv):
         config.setdefault("orders", {})[order["id"]] = result["orderToken"]
         config["lastOrderId"] = order["id"]
         save_config(config)
-        print(f"订单已创建：{order['id']}\n应付：{money(order['totalMinor'], order['currency'])}\n需要付款时说：付款 {order['id']}")
+        checkout_note = create_checkout(config, order["id"])
+        print(f"订单已创建\n应付：{money(order['totalMinor'], order['currency'])}\n{checkout_note}\n模拟完成后说：我已付款")
         return 0
 
     preview = re.fullmatch(r"(?:预览|买)(?:\s*([^\s]+))?(?:\s+(\d+))?", text)
@@ -316,31 +342,19 @@ def main(argv):
         print(f"{result['title']} × {result['quantity']}\n合计：{money(result['totalMinor'], result['currency'])}\n确认无误后说：确认")
         return 0
 
-    pay = re.fullmatch(r"付款\s+([^\s]+)", text)
+    pay = re.fullmatch(r"付款(?:\s+([^\s]+))?", text)
     if pay:
-        order_id = pay.group(1)
-        order_token = config.get("orders", {}).get(order_id)
-        if not order_token:
-            raise RuntimeError("本机没有这个订单的访问凭证")
-        result = request(config, "POST", f"/api/orders/{urllib.parse.quote(order_id)}/checkout", {}, order_token)
-        qr_path = None
-        if result.get("checkoutQrSvg"):
-            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-            qr_path = CONFIG_DIR / f"{order_id}-checkout.svg"
-            qr_path.write_text(result["checkoutQrSvg"], encoding="utf-8")
-        config.setdefault("paymentSessions", {})[order_id] = {
-            "provider": result.get("provider"),
-            "checkoutUrl": result.get("checkoutUrl"),
-        }
-        save_config(config)
-        provider_note = "开发测试二维码，不会扣真实资金。" if result.get("provider") == "mock" else f"支付提供商：{result.get('provider', 'external')}。"
-        qr_note = f"\n二维码：{qr_path}" if qr_path else ""
-        print(f"请核对后在支付提供商页面完成付款：\n{result['checkoutUrl']}{qr_note}\n{provider_note}")
+        order_id = pay.group(1) or config.get("lastOrderId")
+        if not order_id:
+            raise RuntimeError("请先购买并确认商品")
+        print(create_checkout(config, order_id))
         return 0
 
-    paid_claim = re.fullmatch(r"(?:我已付款|已付款)\s+([^\s]+)", text)
+    paid_claim = re.fullmatch(r"(?:我已付款|已付款)(?:\s+([^\s]+))?", text)
     if paid_claim:
-        order_id = paid_claim.group(1)
+        order_id = paid_claim.group(1) or config.get("lastOrderId")
+        if not order_id:
+            raise RuntimeError("请先购买并确认商品")
         order_token = config.get("orders", {}).get(order_id)
         session = config.get("paymentSessions", {}).get(order_id)
         if not order_token or not session:
@@ -354,17 +368,21 @@ def main(argv):
         print(f"已记录模拟付款，订单状态：{result['status']}（simulated）。商家现在可以看到并接单。")
         return 0
 
-    order_status = re.fullmatch(r"订单\s+([^\s]+)", text)
+    order_status = re.fullmatch(r"订单(?:\s+([^\s]+))?", text)
     if order_status:
-        order_id = order_status.group(1)
+        order_id = order_status.group(1) or config.get("lastOrderId")
+        if not order_id:
+            raise RuntimeError("本机没有最近订单")
         order_token = config.get("orders", {}).get(order_id)
         result = request(config, "GET", f"/api/orders/{urllib.parse.quote(order_id)}", token=order_token)["order"]
         print(f"订单 {order_id}\n状态：{result['status']}\n付款验证：{result.get('paymentVerification') or '未付款'}\n金额：{money(result['totalMinor'], result['currency'])}")
         return 0
 
-    complete = re.fullmatch(r"确认收货\s+([^\s]+)", text)
+    complete = re.fullmatch(r"确认收货(?:\s+([^\s]+))?", text)
     if complete:
-        order_id = complete.group(1)
+        order_id = complete.group(1) or config.get("lastOrderId")
+        if not order_id:
+            raise RuntimeError("本机没有最近订单")
         order_token = config.get("orders", {}).get(order_id)
         result = request(config, "POST", f"/api/orders/{urllib.parse.quote(order_id)}/status", {"status": "completed", "fulfilledOnTime": True}, order_token)["order"]
         print(f"已确认收货，订单状态：{result['status']}")

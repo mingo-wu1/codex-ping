@@ -159,7 +159,7 @@ try {
     orders: {},
   }, null, 2), "utf8");
   const merchantOrders = await clientCommand(merchantHome, "商家订单");
-  if (!merchantOrders.includes(order.id) || !merchantOrders.includes("paid (simulated)")) throw new Error("merchant did not receive the simulated paid status");
+  if (!merchantOrders.includes("Sonic electric toothbrush") || !merchantOrders.includes("paid (simulated)")) throw new Error("merchant did not receive the simulated paid status");
   if (!((await clientCommand(merchantHome, `接单 ${order.id}`)).includes("accepted"))) throw new Error("merchant acceptance failed");
   if (!((await clientCommand(merchantHome, `已发货 ${order.id}`)).includes("fulfilled"))) throw new Error("merchant fulfilment failed");
   if (!((await clientCommand(buyerHome, `确认收货 ${order.id}`)).includes("completed"))) throw new Error("buyer completion failed");

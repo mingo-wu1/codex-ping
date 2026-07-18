@@ -36,3 +36,5 @@ For the hosted MVP, run repository `market/marketboard.py`, then `~/.codex-bazaa
 Show the exact merchant, item, quantity, total, currency, delivery, and refund terms before creating an order. Require explicit buyer confirmation. Return only an official provider checkout URL or provider-generated QR code. Never enter payment credentials or claim success until a signed webhook or official merchant API confirms the exact order, amount, and currency. Static QR transfers and screenshots remain `payment_unverified` and never affect verified-trade ranking.
 
 When development mock payments are explicitly enabled, `我已付款 <order-id>` may confirm the generated mock session. Always call it simulated, let the merchant see `paid (simulated)`, and exclude it from verified-purchase labels and public transaction ranking.
+
+Do not expose order IDs in the normal flow. `确认` creates the latest order and immediately saves its provider QR; `我已付款`, `订单`, `接单`, `发货`, and `确认收货` resolve the latest relevant order automatically. The minimal complete demo is: buyer `找...` → `买这个` → `确认` → `我已付款`; merchant `订单` → `接单` → `发货`; buyer `确认收货`.
