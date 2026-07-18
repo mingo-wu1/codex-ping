@@ -74,7 +74,7 @@ async function cleanup(path) {
 }
 
 try {
-  worker = spawn(workerNode, [join(repo, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", "--port", "8796", "--persist-to", join(root, "worker-state"), "--var", "ADMIN_TOKEN:commerce-test-admin", "--var", "ALLOW_MOCK_PAYMENTS:true"], {
+  worker = spawn(workerNode, [join(repo, "node_modules", "wrangler", "bin", "wrangler.js"), "dev", "--port", "8796", "--persist-to", join(root, "worker-state"), "--var", "ADMIN_TOKEN:commerce-test-admin", "--var", "ALLOW_MOCK_PAYMENTS:true", "--var", "ALLOW_DEMO_AUTO_APPROVAL:true"], {
     cwd: repo,
     stdio: ["ignore", "ignore", "inherit"],
   });
@@ -86,9 +86,7 @@ try {
   });
   const merchant = merchantResult.merchant;
   const merchantToken = merchantResult.merchantToken;
-  await request(`/api/merchants/${merchant.id}/verify`, {
-    method: "POST", admin: "commerce-test-admin", body: { level: "basic" },
-  });
+  if (merchant.status !== "active" || merchant.verificationLevel !== "demo-only") throw new Error("demo merchant was not auto-approved and labelled clearly");
 
   const productImage = readFileSync(join(repo, "test-assets", "electric-toothbrush.png"));
   const uploaded = await request(`/api/images?merchant=${merchant.id}`, {
@@ -113,11 +111,7 @@ try {
     },
   });
   const listing = listingResult.listing;
-  await request(`/api/listings/${listing.id}/compliance`, {
-    method: "POST",
-    admin: "commerce-test-admin",
-    body: { status: "active", policyId: "cn-general-goods", policyVersion: "test-only" },
-  });
+  if (listing.compliance.status !== "active" || listing.compliance.policyId !== "demo-only") throw new Error("demo listing was not auto-approved and labelled clearly");
 
   const search = await request("/api/listings?q=toothbrush&max_price_minor=20000&currency=CNY&ship_to=CN&sort=price");
   if (!search.listings.some((item) => item.id === listing.id)) throw new Error("buyer could not discover the listing");

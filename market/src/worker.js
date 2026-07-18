@@ -200,7 +200,10 @@ export class MarketRoom extends DurableObject {
 
       if (request.method === "POST" && path === "/api/merchants") {
         const input = await body(request);
-        const merchant = board.registerMerchant(input);
+        let merchant = board.registerMerchant(input);
+        if (String(this.env.ALLOW_DEMO_AUTO_APPROVAL || "false") === "true") {
+          merchant = board.verifyMerchant(merchant.id, "demo-only");
+        }
         const merchantToken = token("mch");
         const auth = (await this.storage.get("merchantAuth")) || {};
         auth[merchant.id] = await digest(merchantToken);
@@ -251,7 +254,15 @@ export class MarketRoom extends DurableObject {
       if (request.method === "POST" && path === "/api/listings") {
         const input = await body(request);
         await this.requireMerchant(request, input.merchantId);
-        const listing = board.createListing(input.merchantId, input);
+        let listing = board.createListing(input.merchantId, input);
+        if (String(this.env.ALLOW_DEMO_AUTO_APPROVAL || "false") === "true") {
+          listing = board.setListingCompliance(listing.id, {
+            status: "active",
+            policyId: "demo-only",
+            policyVersion: "1",
+            reasonCode: "DEMO_AUTO_APPROVAL",
+          });
+        }
         await this.save(board);
         return json({ listing }, 201);
       }

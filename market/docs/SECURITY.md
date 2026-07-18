@@ -32,6 +32,7 @@ The current MVP intentionally does not collect shipping addresses. A production 
 ## Before public production
 
 1. Set `ALLOW_MOCK_PAYMENTS=false`.
+2. Set `ALLOW_DEMO_AUTO_APPROVAL=false` (or leave it unset). It exists only for the local two-computer demo and labels approvals `demo-only`.
 2. Configure Cloudflare rate limiting/WAF for write endpoints.
 3. Restrict CORS to approved origins if third-party clients are not intended.
 4. Configure Stripe secrets and webhook delivery retries.
