@@ -1,0 +1,18 @@
+name = "codex-bazaar"
+main = "src/worker.js"
+compatibility_date = "2026-07-18"
+
+[vars]
+ALLOW_MOCK_PAYMENTS = "true"
+ALLOW_DEMO_AUTO_APPROVAL = "true"
+
+[[durable_objects.bindings]]
+name = "MARKET_ROOM"
+class_name = "MarketRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MarketRoom"]
+
+# Product-image uploads are added by the production configuration after R2 is
+# enabled on the Cloudflare account. QR checkout does not depend on R2.
