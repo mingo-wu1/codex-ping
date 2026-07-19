@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<defs><style>
+.bg{fill:#0b1018}.zone{fill:#111a27;stroke:#34465f;stroke-width:2}.node{fill:#172235;stroke:#526b8d;stroke-width:2}.edge{fill:none;stroke:#7cd4a5;stroke-width:3;marker-end:url(#a)}.dash{fill:none;stroke:#e5b567;stroke-width:3;stroke-dasharray:9 7;marker-end:url(#b)}.title{fill:#f5f7fa;font:700 38px Arial,'Microsoft YaHei'}.sub{fill:#9baabc;font:20px Arial,'Microsoft YaHei'}.zt{fill:#e5b567;font:700 22px Arial,'Microsoft YaHei'}.nt{fill:#fff;font:700 21px Arial,'Microsoft YaHei'}.tx{fill:#c2ccda;font:17px Arial,'Microsoft YaHei'}.sm{fill:#92a2b7;font:15px Arial,'Microsoft YaHei'}.flow{fill:#7cd4a5;font:700 16px Arial,'Microsoft YaHei'}
+</style><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7cd4a5"/></marker><marker id="b" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#e5b567"/></marker></defs>
+<rect class="bg" width="1600" height="1000"/><text class="title" x="60" y="60">Codex Bazaar · 可自托管点对点交易架构</text><text class="sub" x="60" y="94">对话入口、可验证商品黑板、商家自托管内容、阅后删除消息与支付平台交接</text>
+<rect class="zone" x="40" y="125" width="1520" height="175" rx="18"/><text class="zt" x="65" y="158">客户端层 · 两台独立电脑</text>
+<rect class="node" x="75" y="180" width="300" height="90" rx="13"/><text class="nt" x="100" y="215">电脑 A · 商家 Codex</text><text class="tx" x="100" y="245">发布 / 接单 / 发货 · 本地身份</text>
+<rect class="node" x="650" y="180" width="300" height="90" rx="13"/><text class="nt" x="675" y="215">$codexbazaar Skill</text><text class="tx" x="675" y="245">意图解析 · 会话状态 · 隐藏内部 ID</text>
+<rect class="node" x="1225" y="180" width="300" height="90" rx="13"/><text class="nt" x="1250" y="215">电脑 B · 买家 Codex</text><text class="tx" x="1250" y="245">搜索 / 购买 / 收货 · 本地验证</text>
+<path class="edge" d="M375 225H640"/><path class="edge" d="M950 225H1215"/>
+
+<rect class="zone" x="40" y="330" width="930" height="405" rx="18"/><text class="zt" x="65" y="365">协议与中继层 · Cloudflare 公共演示或自行部署</text>
+<rect class="node" x="75" y="395" width="255" height="120" rx="13"/><text class="nt" x="100" y="430">Ping Worker</text><text class="tx" x="100" y="460">身份 / 在线状态 / 未读计数</text><text class="sm" x="100" y="490">正文读取后从中继删除</text>
+<rect class="node" x="370" y="395" width="255" height="120" rx="13"/><text class="nt" x="395" y="430">Market Indexer</text><text class="tx" x="395" y="460">签名商品事件 / 搜索摘要</text><text class="sm" x="395" y="490">不保存详情与原始图片</text>
+<rect class="node" x="665" y="395" width="255" height="120" rx="13"/><text class="nt" x="690" y="430">Order / Pay Worker</text><text class="tx" x="690" y="460">订单状态 / Checkout 交接</text><text class="sm" x="690" y="490">模拟支付与真实适配器隔离</text>
+<rect class="node" x="75" y="565" width="255" height="120" rx="13"/><text class="nt" x="100" y="600">Durable Objects</text><text class="tx" x="100" y="630">短消息 / 临时状态</text><text class="sm" x="100" y="660">最少存储 · 可替换实现</text>
+<rect class="node" x="370" y="565" width="255" height="120" rx="13"/><text class="nt" x="395" y="600">签名事件日志</text><text class="tx" x="395" y="630">Ed25519 · sequence · previous</text><text class="sm" x="395" y="660">追加更新，旧历史不可静默改写</text>
+<rect class="node" x="665" y="565" width="255" height="120" rx="13"/><text class="nt" x="690" y="600">合规证明</text><text class="tx" x="690" y="630">规则版本 / 地区 / 内容哈希</text><text class="sm" x="690" y="660">独立服务商签名，可多家交叉验证</text>
+<path class="edge" d="M202 515V555"/><path class="edge" d="M497 515V555"/><path class="edge" d="M792 515V555"/>
+
+<rect class="zone" x="1010" y="330" width="550" height="405" rx="18"/><text class="zt" x="1035" y="365">参与方自托管与外部信任边界</text>
+<rect class="node" x="1045" y="395" width="480" height="120" rx="13"/><text class="nt" x="1070" y="430">商家节点 · Merchant Node</text><text class="tx" x="1070" y="460">私钥 / 商品详情 / 原始图片 / HTTP Endpoint</text><text class="sm" x="1070" y="490">买家按需请求；商家离线则详情不可用</text>
+<rect class="node" x="1045" y="565" width="225" height="120" rx="13"/><text class="nt" x="1070" y="600">支付提供商</text><text class="tx" x="1070" y="630">Stripe / 微信 / 支付宝</text><text class="sm" x="1070" y="660">官方 Checkout 与回调</text>
+<rect class="node" x="1300" y="565" width="225" height="120" rx="13"/><text class="nt" x="1325" y="600">买家本地验证</text><text class="tx" x="1325" y="630">Ed25519 + SHA-256</text><text class="sm" x="1325" y="660">签名、内容、图片逐项核验</text>
+<path class="dash" d="M625 455V535H1000V455H1035"/><text class="flow" x="690" y="527">签名摘要 / contentHash</text><path class="edge" d="M1045 505C970 540 970 625 1290 625"/><text class="flow" x="1015" y="554">详情与图片按需返回</text><path class="dash" d="M920 455H975V700H1020V625H1035"/><text class="flow" x="765" y="718">Checkout URL / Webhook</text>
+
+<rect class="zone" x="40" y="770" width="1520" height="180" rx="18"/><text class="zt" x="65" y="805">一次交易的数据流</text>
+<text class="nt" x="75" y="850">① 商家签名发布</text><text class="nt" x="345" y="850">② 索引器展示摘要</text><text class="nt" x="645" y="850">③ 买家按需取详情</text><text class="nt" x="945" y="850">④ 本地验签与验哈希</text><text class="nt" x="1260" y="850">⑤ 订单与支付交接</text>
+<path class="edge" d="M230 885H330"/><path class="edge" d="M535 885H630"/><path class="edge" d="M835 885H930"/><path class="edge" d="M1155 885H1245"/>
+<text class="sm" x="75" y="920">黑板只保存小型事件与证明；私钥、图片、地址和完整支付记录不进入公共索引。</text>
+</svg>
